@@ -12,6 +12,10 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 EndProject
 Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "HelloWorld", "src\HelloWorld\HelloWorld.xproj", "{F33C3354-FB29-43F6-9BB5-24603D9340CE}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{1754EA89-C099-40D1-8361-45A0EF0B44B4}"
+EndProject
+Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "HelloWorld.Tests", "tests\HelloWorld.Tests\HelloWorld.Tests.xproj", "{5F4BB366-7FB6-4DDB-BC0A-1DE150C22825}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -22,11 +26,16 @@ Global
 		{F33C3354-FB29-43F6-9BB5-24603D9340CE}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{F33C3354-FB29-43F6-9BB5-24603D9340CE}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{F33C3354-FB29-43F6-9BB5-24603D9340CE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5F4BB366-7FB6-4DDB-BC0A-1DE150C22825}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5F4BB366-7FB6-4DDB-BC0A-1DE150C22825}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5F4BB366-7FB6-4DDB-BC0A-1DE150C22825}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5F4BB366-7FB6-4DDB-BC0A-1DE150C22825}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{F33C3354-FB29-43F6-9BB5-24603D9340CE} = {B3A7C971-860B-4151-A870-4A8318D04D53}
+		{5F4BB366-7FB6-4DDB-BC0A-1DE150C22825} = {1754EA89-C099-40D1-8361-45A0EF0B44B4}
 	EndGlobalSection
 EndGlobal

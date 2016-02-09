@@ -1,0 +1,26 @@
+﻿{
+  "version": "1.0.0-*",
+  "description": "HelloWorld.Tests Class Library",
+  "authors": [ "sgordon" ],
+  "tags": [ "" ],
+  "projectUrl": "",
+  "licenseUrl": "",
+
+  "dependencies": {
+    "HelloWorld": "1.0.0-*",
+    "xunit": "2.1.0",
+    "xunit.runner.dnx": "2.1.0-rc1-build204"
+  },
+
+  "commands": {
+    "test": "xunit.runner.dnx"
+  },
+
+  "frameworks": {
+    "dnxcore50": {
+      "dependencies": {
+        "LightMock.vNext":  "1.0.1"
+      }
+    }
+  }
+}
