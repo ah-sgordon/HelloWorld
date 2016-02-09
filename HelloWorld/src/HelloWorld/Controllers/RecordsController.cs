@@ -17,41 +17,39 @@ namespace HelloWorld.Controllers
         }
 
         [HttpGet]
-        public object Get()
+        public IActionResult Get()
         {
-            return new
+            return Ok(new
             {
                 items = _RecordRepository.GetAll() ?? new Record[] {}
-            };
+            });
+
         }
 
         [HttpGet("{id}")]
-        public object Get(string id)
+        public IActionResult Get(string id)
         {
             var record = _RecordRepository.Get(id);
 
             if (record == null)
             {
-                Response.StatusCode = 404;
-                return null;
+                return HttpNotFound();
             }
 
-            return record;
+            return Ok(record);
         }
 
         [HttpPost]
-        public object Post([FromBody]Record record)
+        public IActionResult Post([FromBody]Record record)
         {
             if (record == null)
             {
-                Response.StatusCode = 400;
-                return new { message = "No record supplied." };
+                return HttpBadRequest("No record supplied.");
             }
 
             if (string.IsNullOrWhiteSpace(record.Id))
             {
-                Response.StatusCode = 400;
-                return new { message = "Record Id not supplied." };
+                return HttpBadRequest("Record Id not supplied.");
             }
 
             //if (_Records.ContainsKey(record.Id))
@@ -61,28 +59,25 @@ namespace HelloWorld.Controllers
             //}
 
             _RecordRepository.Add(record);
-            return null;
+            return Ok();
         }
 
         [HttpPut("{id}")]
-        public object Put(string id, [FromBody]Record record)
+        public IActionResult Put(string id, [FromBody]Record record)
         {
             if (string.IsNullOrWhiteSpace(id))
             {
-                Response.StatusCode = 400;
-                return new { message = "Record Id not supplied." };
+                return HttpBadRequest("Record Id not supplied.");
             }
 
             if (record == null)
             {
-                Response.StatusCode = 400;
-                return new { message = "No record supplied." };
+                return HttpBadRequest("No record supplied.");
             }
 
             if (string.IsNullOrWhiteSpace(record.Id))
             {
-                Response.StatusCode = 400;
-                return new { message = "Invalid record Id." };
+                return HttpBadRequest("Invalid record Id.");
             }
 
             id = id.Trim();
@@ -94,16 +89,15 @@ namespace HelloWorld.Controllers
             //}
 
             _RecordRepository.Update(id, record);
-            return null;
+            return Ok();
         }
 
         [HttpDelete("{id}")]
-        public object Delete(string id)
+        public IActionResult Delete(string id)
         {
             if (string.IsNullOrWhiteSpace(id))
             {
-                Response.StatusCode = 400;
-                return new { message = "Record Id not supplied." };
+                return HttpBadRequest("Record Id not supplied.");
             }
 
             //if (!_Records.ContainsKey(id))
@@ -113,7 +107,7 @@ namespace HelloWorld.Controllers
             //}
 
             _RecordRepository.Delete(id);
-            return null;
+            return Ok();
         }
     }
 
