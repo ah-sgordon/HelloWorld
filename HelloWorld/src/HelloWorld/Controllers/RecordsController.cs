@@ -2,38 +2,41 @@
 using Microsoft.AspNet.Mvc;
 using System.Linq;
 using HelloWorld.Models;
+using HelloWorld.Repositories;
 
 namespace HelloWorld.Controllers
 {
     [Route("[controller]")]
     public class RecordsController : Controller
     {
-        private static Dictionary<string, Record> _Records = new Dictionary<string, Record>
+        private IRecordRepository _RecordRepository;
+
+        public RecordsController(IRecordRepository recordRepository)
         {
-            { "AAA", new Record { Id = "AAA", Value="Value 1" } },
-            { "BBB", new Record { Id = "BBB", Value="Value 1" } }
-        };
+            _RecordRepository = recordRepository;
+        }
 
         [HttpGet]
         public object Get()
         {
             return new
             {
-                items = _Records.Values.ToList()
+                items = _RecordRepository.GetAll() ?? new Record[] {}
             };
         }
 
         [HttpGet("{id}")]
         public object Get(string id)
         {
-            Record record;
-            if (!_Records.TryGetValue(id, out record))
+            var record = _RecordRepository.Get(id);
+
+            if (record == null)
             {
                 Response.StatusCode = 404;
                 return null;
             }
 
-            return new { item = record };
+            return record;
         }
 
         [HttpPost]
@@ -51,15 +54,13 @@ namespace HelloWorld.Controllers
                 return new { message = "Record Id not supplied." };
             }
 
-            record.Id = record.Id.Trim();
+            //if (_Records.ContainsKey(record.Id))
+            //{
+            //    Response.StatusCode = 409;
+            //    return new { message = string.Format("Record with Id '{0}' already exists.", record.Id) };
+            //}
 
-            if (_Records.ContainsKey(record.Id))
-            {
-                Response.StatusCode = 409;
-                return new { message = string.Format("Record with Id '{0}' already exists.", record.Id) };
-            }
-
-            _Records.Add(record.Id, record);
+            _RecordRepository.Add(record);
             return null;
         }
 
@@ -86,13 +87,13 @@ namespace HelloWorld.Controllers
 
             id = id.Trim();
 
-            if (!_Records.ContainsKey(id))
-            {
-                Response.StatusCode = 404;
-                return new { message = "Record not found." };
-            }
+            //if (!_Records.ContainsKey(id))
+            //{
+            //    Response.StatusCode = 404;
+            //    return new { message = "Record not found." };
+            //}
 
-            _Records[id] = record;
+            _RecordRepository.Update(id, record);
             return null;
         }
 
@@ -105,15 +106,13 @@ namespace HelloWorld.Controllers
                 return new { message = "Record Id not supplied." };
             }
 
-            id = id.Trim();
+            //if (!_Records.ContainsKey(id))
+            //{
+            //    Response.StatusCode = 404;
+            //    return new { message = "Record not found." };
+            //}
 
-            if (!_Records.ContainsKey(id))
-            {
-                Response.StatusCode = 404;
-                return new { message = "Record not found." };
-            }
-
-            _Records.Remove(id);
+            _RecordRepository.Delete(id);
             return null;
         }
     }

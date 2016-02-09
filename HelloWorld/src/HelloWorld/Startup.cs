@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+﻿using HelloWorld.Repositories;
 using Microsoft.AspNet.Builder;
 using Microsoft.AspNet.Hosting;
 using Microsoft.Extensions.Configuration;
@@ -28,6 +25,8 @@ namespace HelloWorld
         {
             // Add framework services.
             services.AddMvc();
+
+            services.AddSingleton<IRecordRepository, RecordRepository>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -36,9 +35,9 @@ namespace HelloWorld
             loggerFactory.AddConsole(Configuration.GetSection("Logging"));
             loggerFactory.AddDebug();
 
-            app.UseIISPlatformHandler();
+            //app.UseIISPlatformHandler();
 
-            app.UseStaticFiles();
+            //app.UseStaticFiles();
 
             app.UseMvc();
         }
