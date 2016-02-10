@@ -3,6 +3,8 @@ using Microsoft.AspNet.Mvc;
 using System.Linq;
 using HelloWorld.Models;
 using HelloWorld.Repositories;
+using System.Threading.Tasks;
+using System;
 
 namespace HelloWorld.Controllers
 {
@@ -17,19 +19,19 @@ namespace HelloWorld.Controllers
         }
 
         [HttpGet]
-        public IActionResult Get()
+        public async Task<IActionResult> Get()
         {
             return Ok(new
             {
-                items = _RecordRepository.GetAll() ?? new Record[] {}
+                items = await _RecordRepository.GetAll() ?? new Record[] { }
             });
 
         }
 
         [HttpGet("{id}")]
-        public IActionResult Get(string id)
+        public async Task<IActionResult> Get(string id)
         {
-            var record = _RecordRepository.Get(id);
+            var record = await _RecordRepository.Get(id);
 
             if (record == null)
             {
@@ -40,30 +42,25 @@ namespace HelloWorld.Controllers
         }
 
         [HttpPost]
-        public IActionResult Post([FromBody]Record record)
+        public async Task<IActionResult> Post([FromBody]Record record)
         {
             if (record == null)
             {
                 return HttpBadRequest("No record supplied.");
             }
 
-            if (string.IsNullOrWhiteSpace(record.Id))
+            if (!string.IsNullOrWhiteSpace(record.Id))
             {
-                return HttpBadRequest("Record Id not supplied.");
+                return HttpBadRequest("Record Id is assigned automatically.  Do not provide a value.");
             }
 
-            //if (_Records.ContainsKey(record.Id))
-            //{
-            //    Response.StatusCode = 409;
-            //    return new { message = string.Format("Record with Id '{0}' already exists.", record.Id) };
-            //}
-
-            _RecordRepository.Add(record);
-            return Ok();
+            record.Id = Guid.NewGuid().ToString();
+            await _RecordRepository.Add(record);
+            return Ok(record);
         }
 
         [HttpPut("{id}")]
-        public IActionResult Put(string id, [FromBody]Record record)
+        public async Task<IActionResult> Put(string id, [FromBody]Record record)
         {
             if (string.IsNullOrWhiteSpace(id))
             {
@@ -88,12 +85,12 @@ namespace HelloWorld.Controllers
             //    return new { message = "Record not found." };
             //}
 
-            _RecordRepository.Update(id, record);
+            await _RecordRepository.Update(id, record);
             return Ok();
         }
 
         [HttpDelete("{id}")]
-        public IActionResult Delete(string id)
+        public async Task<IActionResult> Delete(string id)
         {
             if (string.IsNullOrWhiteSpace(id))
             {
@@ -106,7 +103,7 @@ namespace HelloWorld.Controllers
             //    return new { message = "Record not found." };
             //}
 
-            _RecordRepository.Delete(id);
+            await _RecordRepository.Delete(id);
             return Ok();
         }
     }

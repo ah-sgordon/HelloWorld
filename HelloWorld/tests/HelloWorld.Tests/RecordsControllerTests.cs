@@ -1,10 +1,10 @@
 ﻿using HelloWorld.Controllers;
-using HelloWorld.Tests.Mocks;
 using Xunit;
 using Newtonsoft.Json;
-using System.Collections.Generic;
 using Microsoft.AspNet.Mvc;
-using LightMock;
+using System.Threading.Tasks;
+using HelloWorld.Repositories;
+using Moq;
 
 namespace HelloWorld.Tests
 {
@@ -13,21 +13,26 @@ namespace HelloWorld.Tests
         [Fact]
         [Trait("Type", "Unit")]
         [Trait("HappyPath", "true")]
-        public void GetAllReturnsTwoResults()
+        public async void GetAllReturnsTwoResults()
         {
-            var records = new[] 
+            var records = new[]
             {
                 new Models.Record {  Id = "1", Value = "Value 1" },
                 new Models.Record {  Id = "2", Value = "Value 2" }
             };
 
-            var recordRepository = new MockRecordRepository();
-            recordRepository.Context
-                .Arrange(p => p.GetAll())
-                .Returns(records);
+            var mockRecordRepository = new Mock<IRecordRepository>();
+            mockRecordRepository
+                .Setup(p => p.GetAll())
+                .Returns(async () =>
+                {
+                    await Task.Yield();
+                    return records;
+                });
+            var recordRepository = mockRecordRepository.Object;
             var target = new RecordsController(recordRepository);
 
-            var result = target.Get();
+            var result = await target.Get();
 
             Assert.IsAssignableFrom<ObjectResult>(result);
 
@@ -37,17 +42,22 @@ namespace HelloWorld.Tests
 
         [Fact]
         [Trait("Type", "Unit")]
-        public void GetAllReturnsNoResultsWhenRepositoryIsEmpty()
+        public async void GetAllReturnsNoResultsWhenRepositoryIsEmpty()
         {
             var records = new Models.Record[] { };
 
-            var recordRepository = new MockRecordRepository();
-            recordRepository.Context
-                .Arrange(p => p.GetAll())
-                .Returns(records);
+            var mockRecordRepository = new Mock<IRecordRepository>();
+            mockRecordRepository
+                .Setup(p => p.GetAll())
+                .Returns(async () =>
+                {
+                    await Task.Yield();
+                    return records;
+                });
+            var recordRepository = mockRecordRepository.Object;
             var target = new RecordsController(recordRepository);
 
-            var result = target.Get();
+            var result = await target.Get();
 
             Assert.IsAssignableFrom<ObjectResult>(result);
             var expected = JsonConvert.SerializeObject(new { items = records });
@@ -56,16 +66,21 @@ namespace HelloWorld.Tests
 
         [Fact]
         [Trait("Type", "Unit")]
-        public void GetAllReturnsNoResultsWhenRepositoryReturnsNull()
+        public async void GetAllReturnsNoResultsWhenRepositoryReturnsNull()
         {
             Models.Record[] records = null;
-            var recordRepository = new MockRecordRepository();
-            recordRepository.Context
-                .Arrange(p => p.GetAll())
-                .Returns(records);
+            var mockRecordRepository = new Mock<IRecordRepository>();
+            mockRecordRepository
+                .Setup(p => p.GetAll())
+                .Returns(async () =>
+                {
+                    await Task.Yield();
+                    return records;
+                });
+            var recordRepository = mockRecordRepository.Object;
             var target = new RecordsController(recordRepository);
 
-            var result = target.Get();
+            var result = await target.Get();
 
             Assert.IsAssignableFrom<ObjectResult>(result);
             var expected = JsonConvert.SerializeObject(new { items = new Models.Record[] { } });
@@ -75,17 +90,21 @@ namespace HelloWorld.Tests
         [Fact]
         [Trait("Type", "Unit")]
         [Trait("HappyPath", "true")]
-        public void GetByIdReturnsMatch()
+        public async void GetByIdReturnsMatch()
         {
             var record = new Models.Record { Id = "1", Value = "Value 1" };
-
-            var recordRepository = new MockRecordRepository();
-            recordRepository.Context
-                .Arrange(p => p.Get("1"))
-                .Returns(record);
+            var recordRepositoryMock = new Mock<IRecordRepository>();
+            recordRepositoryMock
+                .Setup(p => p.Get(It.Is<string>(s => s == "1")))
+                .Returns(async () =>
+                {
+                    await Task.Yield();
+                    return record;
+                });
+            var recordRepository = recordRepositoryMock.Object;
             var target = new RecordsController(recordRepository);
 
-            var result = target.Get("1");
+            var result = await target.Get("1");
 
             Assert.IsAssignableFrom<ObjectResult>(result);
             var expected = JsonConvert.SerializeObject(record);
@@ -95,28 +114,34 @@ namespace HelloWorld.Tests
 
         [Fact]
         [Trait("Type", "Unit")]
-        public void GetByIdReturnsNotFoundWhenNoMatchExists()
+        public async void GetByIdReturnsNotFoundWhenNoMatchExists()
         {
             Models.Record record = null;
-            var recordRepository = new MockRecordRepository();
-            recordRepository.Context
-               .Arrange(p => p.Get("1"))
-               .Returns(record);
+            var mockRecordRepository = new Mock<IRecordRepository>();
+            mockRecordRepository
+                .Setup(p => p.Get("2"))
+                .Returns(async () =>
+                {
+                    await Task.Yield();
+                    return record;
+                });
+            var recordRepository = mockRecordRepository.Object;
             var target = new RecordsController(recordRepository);
 
-            var result = target.Get("2");
+            var result = await target.Get("2");
 
             Assert.IsAssignableFrom<HttpNotFoundResult>(result);
         }
 
         [Fact]
         [Trait("Type", "Unit")]
-        public void PostReturnsBadRequestWhenNoRecordProvided()
+        public async void PostReturnsBadRequestWhenNoRecordProvided()
         {
-            var recordRepository = new MockRecordRepository();
+            var mockRecordRepository = new Mock<IRecordRepository>();
+            var recordRepository = mockRecordRepository.Object;
             var target = new RecordsController(recordRepository);
 
-            var result = target.Post(null);
+            var result = await target.Post(null);
 
             Assert.IsAssignableFrom<BadRequestObjectResult>(result);
             Assert.Equal("No record supplied.", ((BadRequestObjectResult)result).Value);
@@ -124,47 +149,55 @@ namespace HelloWorld.Tests
 
         [Fact]
         [Trait("Type", "Unit")]
-        public void PostReturnsBadRequestWhenNoIdProvided()
+        public async void PostReturnsBadRequestWhenIdProvided()
         {
-            var recordRepository = new MockRecordRepository();
+            var mockRecordRepository = new Mock<IRecordRepository>();
+            var recordRepository = mockRecordRepository.Object;
             var target = new RecordsController(recordRepository);
 
-            var result = target.Post(new Models.Record { Id = "  ", Value = "This record has no Id." });
+            var result = await target.Post(new Models.Record { Id = "123", Value = "This record has no Id." });
 
             Assert.IsAssignableFrom<BadRequestObjectResult>(result);
-            Assert.Equal("Record Id not supplied.", ((BadRequestObjectResult)result).Value);
+            Assert.Equal("Record Id is assigned automatically.  Do not provide a value.", ((BadRequestObjectResult)result).Value);
         }
 
 
         [Fact]
         [Trait("Type", "Unit")]
         [Trait("HappyPath", "true")]
-        public void PostAddsRecord()
+        public async void PostAddsRecord()
         {
-            Models.Record record = null;
-
-            var recordRepository = new MockRecordRepository();
-            recordRepository.Context
-                .Arrange(p => p.Add(The<Models.Record>.IsAnyValue))
-                .Callback<Models.Record>(p => record = p);
+            var mockRecordRepository = new Mock<IRecordRepository>();
+            mockRecordRepository
+                .Setup(p => p.Add(It.IsAny<Models.Record>()))
+                .Returns(async () =>
+                {
+                    await Task.Yield();
+                });
+            var recordRepository = mockRecordRepository.Object;
             var target = new RecordsController(recordRepository);
 
-            var recordToPost = new Models.Record { Id = "ABC", Value = "This is a good record." };
-            var result = target.Post(recordToPost);
+            var recordToPost = new Models.Record { Id = "", Value = "This is a good record." };
+            var result = await target.Post(recordToPost);
 
-            Assert.IsAssignableFrom<HttpOkResult>(result);
+            Assert.IsAssignableFrom<HttpOkObjectResult>(result);
+
+            var record = ((HttpOkObjectResult)result).Value as Models.Record;
+
             Assert.NotNull(record);
-            Assert.Equal(JsonConvert.SerializeObject(recordToPost), JsonConvert.SerializeObject(record));
+            Assert.False(string.IsNullOrWhiteSpace(record.Id), "Record Id should not be null.");
+            Assert.Equal(recordToPost.Value, record.Value);
         }
 
         [Fact]
         [Trait("Type", "Unit")]
-        public void PutReturnsBadRequestWhenNoIdProvided()
+        public async void PutReturnsBadRequestWhenNoIdProvided()
         {
-            var recordRepository = new MockRecordRepository();
+            var mockRecordRepository = new Mock<IRecordRepository>();
+            var recordRepository = mockRecordRepository.Object;
             var target = new RecordsController(recordRepository);
 
-            var result = target.Put("  ", new Models.Record { Id = "ABC", Value = "This is a good record." });
+            var result = await target.Put("  ", new Models.Record { Id = "ABC", Value = "This is a good record." });
 
             Assert.IsAssignableFrom<BadRequestObjectResult>(result);
             Assert.Equal("Record Id not supplied.", ((BadRequestObjectResult)result).Value);
@@ -172,12 +205,13 @@ namespace HelloWorld.Tests
 
         [Fact]
         [Trait("Type", "Unit")]
-        public void PutReturnsBadRequestWhenNoRecordProvided()
+        public async void PutReturnsBadRequestWhenNoRecordProvided()
         {
-            var recordRepository = new MockRecordRepository();
+            var mockRecordRepository = new Mock<IRecordRepository>();
+            var recordRepository = mockRecordRepository.Object;
             var target = new RecordsController(recordRepository);
 
-            var result = target.Put("ABC", null);
+            var result = await target.Put("ABC", null);
 
             Assert.IsAssignableFrom<BadRequestObjectResult>(result);
             Assert.Equal("No record supplied.", ((BadRequestObjectResult)result).Value);
@@ -185,12 +219,13 @@ namespace HelloWorld.Tests
 
         [Fact]
         [Trait("Type", "Unit")]
-        public void PutReturnsBadRequestWhenRecordHashNoId()
+        public async void PutReturnsBadRequestWhenRecordHasNoId()
         {
-            var recordRepository = new MockRecordRepository();
+            var mockRecordRepository = new Mock<IRecordRepository>();
+            var recordRepository = mockRecordRepository.Object;
             var target = new RecordsController(recordRepository);
 
-            var result = target.Put("ABC", new Models.Record { Id = "   ", Value = "This record has no Id." });
+            var result = await target.Put("ABC", new Models.Record { Id = "   ", Value = "This record has no Id." });
 
             Assert.IsAssignableFrom<BadRequestObjectResult>(result);
             Assert.Equal("Invalid record Id.", ((BadRequestObjectResult)result).Value);
@@ -199,28 +234,30 @@ namespace HelloWorld.Tests
         [Fact]
         [Trait("Type", "Unit")]
         [Trait("HappyPath", "true")]
-        public void PutUpdatesRecord()
+        public async void PutUpdatesRecord()
         {
-            var recordRepository = new MockRecordRepository();
+            var mockRecordRepository = new Mock<IRecordRepository>();
+            var recordRepository = mockRecordRepository.Object;
             var target = new RecordsController(recordRepository);
 
-            var result = target.Put("ABC", new Models.Record { Id = "ABC", Value = "This is an updated record." });
+            var result = await target.Put("ABC", new Models.Record { Id = "ABC", Value = "This is an updated record." });
 
             Assert.IsAssignableFrom<HttpOkResult>(result);
 
-            recordRepository.Context.Assert(
-                p => p.Update("ABC", The<Models.Record>.Is(q => q.Id == "ABC" && q.Value == "This is an updated record.")), 
-                Invoked.Exactly(1));
+            mockRecordRepository.Verify(
+                p => p.Update("ABC", It.Is<Models.Record>(q => q.Id == "ABC" && q.Value == "This is an updated record.")), 
+                Times.Once);
         }
 
         [Fact]
         [Trait("Type", "Unit")]
-        public void DeleteReturnsBadRequestWhenNoIdProvided()
+        public async void DeleteReturnsBadRequestWhenNoIdProvided()
         {
-            var recordRepository = new MockRecordRepository();
+            var mockRecordRepository = new Mock<IRecordRepository>();
+            var recordRepository = mockRecordRepository.Object;
             var target = new RecordsController(recordRepository);
 
-            var result = target.Delete("   ");
+            var result = await target.Delete("   ");
 
             Assert.IsAssignableFrom<BadRequestObjectResult>(result);
             Assert.Equal("Record Id not supplied.", ((BadRequestObjectResult)result).Value);
@@ -229,18 +266,19 @@ namespace HelloWorld.Tests
         [Fact]
         [Trait("Type", "Unit")]
         [Trait("HappyPath", "true")]
-        public void DeleteDeletesRecord()
+        public async void DeleteDeletesRecord()
         {
-            var recordRepository = new MockRecordRepository();
+            var mockRecordRepository = new Mock<IRecordRepository>();
+            var recordRepository = mockRecordRepository.Object;
             var target = new RecordsController(recordRepository);
 
-            var result = target.Delete("ABC");
+            var result = await target.Delete("ABC");
 
             Assert.IsAssignableFrom<HttpOkResult>(result);
 
-            recordRepository.Context.Assert(
+            mockRecordRepository.Verify(
                 p => p.Delete("ABC"),
-                Invoked.Exactly(1));
+                Times.Once());
         }
     }
 }

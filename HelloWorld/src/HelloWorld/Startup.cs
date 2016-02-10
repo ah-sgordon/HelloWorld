@@ -14,8 +14,11 @@ namespace HelloWorld
             // Set up configuration sources.
             var builder = new ConfigurationBuilder()
                 .AddJsonFile("appsettings.json")
+                .AddJsonFile("config.json")
                 .AddEnvironmentVariables();
             Configuration = builder.Build();
+
+            AwsConfigurator.ConfigureAws(Configuration);
         }
 
         public IConfigurationRoot Configuration { get; set; }

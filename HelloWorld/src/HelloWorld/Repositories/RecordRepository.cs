@@ -1,75 +1,74 @@
-﻿using HelloWorld.Models;
+﻿using Amazon;
+using Amazon.DynamoDBv2;
+using Amazon.DynamoDBv2.DataModel;
+using Amazon.Runtime;
+using HelloWorld.Models;
+using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace HelloWorld.Repositories
 {
     public interface IRecordRepository
     {
-        IEnumerable<Record> GetAll();
+        Task<IEnumerable<Record>> GetAll();
 
-        Record Get(string id);
+        Task<Record> Get(string id);
 
-        void Add(Record record);
+        Task Add(Record record);
 
-        void Update(string id, Record record);
+        Task Update(string id, Record record);
 
-        void Delete(string id);
+        Task Delete(string id);
     }
 
     public class RecordRepository : IRecordRepository
     {
-        private Dictionary<string, Record> _Records = new Dictionary<string, Record>
+        private AmazonDynamoDBClient _DynamoDbClient;
+        private DynamoDBContext _DynamoDbContext;
+
+        public RecordRepository()
         {
-            { "AAA", new Record { Id = "AAA", Value="Value 1" } },
-            { "BBB", new Record { Id = "BBB", Value="Value 2" } }
-        };
+            _DynamoDbClient = new AmazonDynamoDBClient(new StoredProfileAWSCredentials(), AWSConfigs.RegionEndpoint);
+            _DynamoDbContext = new DynamoDBContext(_DynamoDbClient, new DynamoDBContextConfig { Conversion = DynamoDBEntryConversion.V2, TableNamePrefix = "HelloWorld." });
+        }
 
-
-        public void Add(Record record)
+        public async Task Add(Record record)
         {
-            record.Id = record.Id.Trim();
+            await _DynamoDbContext.SaveAsync(record);
+ 
+            //TODO: Figure out how to add a condition to prevent save if record already exists
+            //await _DynamoDbContext.SaveAsync(record, new DynamoDBOperationConfig { QueryFilter = new List<ScanCondition> { new ScanCondition("Id", Amazon.DynamoDBv2.DocumentModel.ScanOperator.  ) } );
+        }
 
-            lock (_Records)
+        public async Task Delete(string id)
+        {
+            await _DynamoDbContext.DeleteAsync<Record>(id);
+        }
+
+        public async Task<Record> Get(string id)
+        {
+            return await _DynamoDbContext.LoadAsync<Record>(id);
+        }
+
+        public async Task<IEnumerable<Record>> GetAll()
+        {
+            var returnValue = new List<Record>();
+            var search = _DynamoDbContext.ScanAsync<Record>(new List<ScanCondition>());
+            foreach (var record in await search.GetRemainingAsync())
             {
-                _Records.Add(record.Id, record);
+                returnValue.Add(record);
             }
+
+            return returnValue;
         }
 
-        public void Delete(string id)
+        public async Task Update(string id, Record record)
         {
-            id = id.Trim();
+            await _DynamoDbContext.SaveAsync(record);
 
-            lock (_Records)
-            {
-                _Records.Remove(id);
-            }
-        }
-
-        public Record Get(string id)
-        {
-            Record returnValue;
-            return _Records.TryGetValue(id, out returnValue) ? returnValue : null;
-        }
-
-        public IEnumerable<Record> GetAll()
-        {
-            return _Records.Values;
-        }
-
-        public void Update(string id, Record record)
-        {
-            id = id.Trim();
-            record.Id = record.Id.Trim();
-
-            lock (_Records)
-            {
-                if (!_Records.ContainsKey(id.Trim()))
-                {
-                    return;
-                }
-
-                _Records[id] = record;
-            }
+            //TODO: Figure out how to add a condition to allow save only if record already exists
+            //await _DynamoDbContext.SaveAsync(record, new DynamoDBOperationConfig { QueryFilter = new List<ScanCondition> { new ScanCondition("Id", Amazon.DynamoDBv2.DocumentModel.ScanOperator.  ) } );
         }
     }
 }

@@ -19,7 +19,7 @@
   "frameworks": {
     "dnxcore50": {
       "dependencies": {
-        "LightMock.vNext":  "1.0.1"
+        "moq.netcore":  "4.4.0-beta8"
       }
     }
   }
